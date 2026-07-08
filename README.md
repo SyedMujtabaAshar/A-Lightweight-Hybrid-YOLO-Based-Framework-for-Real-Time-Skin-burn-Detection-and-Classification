@@ -37,17 +37,15 @@ accuracy at a fraction of the computational cost.
 ```
 burn-detection-yolo/
 ├── dataset/
-│   ├── burn_dataset.yaml         # dataset config (paths + classes)
+│   ├── burn_dataset.yaml         # dataset config
 │   ├── images/{train,val,test}/  # <-- add your images here
 │   └── labels/{train,val,test}/  # <-- YOLO-format labels
 ├── models/
 │   └── yolov8n-yolov11n-backbone.yaml   # proposed hybrid architecture
 ├── scripts/
 │   ├── train.py                  # train Experiment 2
-│   ├── evaluate.py               # per-class metrics
-│   └── predict.py                # inference + per-class confidence
 ├── runs/
-│   └── exp2_proposed/weights/best.pt   # <-- add your trained weights here
+│   └── exp2_proposed/weights/best.pt  
 ├── requirements.txt
 └── README.md
 ```
