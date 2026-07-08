@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+
+# Training artifacts (keep best.pt, ignore the rest)
+runs/**/weights/last.pt
+runs/**/*.cache
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Large data (optional — remove if you want images tracked)
+# dataset/images/
