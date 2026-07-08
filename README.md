@@ -1,11 +1,11 @@
-# A Lightweight Hybrid YOLO Framework for Real-Time Skin Burn Detection and Classification
+# A Lightweight Hybrid YOLO-Based Framework for Real-Time Skin Burn Detection and Classification
 
 A lightweight object-detection model that localizes skin burns and classifies their
 severity into **first-, second-, and third-degree** in real time.
 
-The proposed model (Experiment 2) keeps the **YOLOv8n** detection framework but replaces
-its backbone with the lighter, **C3k2-based YOLOv11n backbone** — achieving competitive
-accuracy at a fraction of the computational cost.
+The proposed model keeps the **YOLOv8n** detection framework but replaces its backbone
+with the lighter, **C3k2-based YOLOv11n backbone** — achieving competitive accuracy at a
+fraction of the computational cost, making it suitable for resource-limited clinical settings.
 
 ---
 
@@ -35,17 +35,16 @@ accuracy at a fraction of the computational cost.
 ## Repository structure
 
 ```
-burn-detection-yolo/
-├── dataset/
-│   ├── burn_dataset.yaml         # dataset config
-│   ├── images/{train,val,test}/  # <-- add your images here
-│   └── labels/{train,val,test}/  # <-- YOLO-format labels
-├── models/
-│   └── yolov8n-yolov11n-backbone.yaml   # proposed hybrid architecture
-├── scripts/
-│   ├── train.py                  # train Experiment 2
-├── runs/
-│   └── exp2_proposed/weights/best.pt  
+├── Code/
+│   └── train.py                              # training script (Experiment 2 — proposed model)
+├── Dataset/
+│   ├── Datasetlink.txt                       # link to the full dataset
+│   └── Skin_Burn_Sample.jpg                  # sample image
+├── Proposed Model/
+│   └── yolov8n-yolov11n-backbone.yaml        # hybrid architecture (YOLOv11n C3k2 backbone + YOLOv8n head)
+├── Visuals/                                  # training curves, PR/F1 curves, confusion matrix, results
+├── Weights/
+│   └── best.pt                               # trained model weights
 ├── requirements.txt
 └── README.md
 ```
@@ -55,32 +54,44 @@ burn-detection-yolo/
 ## Setup
 
 ```bash
-git clone https://github.com/<your-username>/burn-detection-yolo.git
-cd burn-detection-yolo
+git clone https://github.com/SyedMujtabaAshar/A-Lightweight-Hybrid-YOLO-Based-Framework-for-Real-Time-Skin-burn-Detection-and-Classification.git
+cd A-Lightweight-Hybrid-YOLO-Based-Framework-for-Real-Time-Skin-burn-Detection-and-Classification
 pip install -r requirements.txt
 ```
 
-## Training (Experiment 2)
+## Dataset
+
+The full dataset (RGB skin-burn images with bounding-box annotations for three severity
+classes) is available at the link in [`Dataset/Datasetlink.txt`](./Dataset/Datasetlink.txt).
+A sample image is provided in the `Dataset/` folder.
+
+The annotations were drawn in CVAT and validated by a dermatologist. Augmentation used
+rotation and brightness adjustment.
+
+## Training
 
 ```bash
-python scripts/train.py
+python "Code/train.py"
 ```
 
 Training recipe (matches the thesis):
 `640×640 · Adam · lr 0.01 · batch 16 · ≤300 epochs (patience 30) · 70/20/10 split`
 
-## Evaluation
+## Evaluation & Inference
 
-```bash
-python scripts/evaluate.py --weights runs/exp2_proposed/weights/best.pt
-```
+```python
+from ultralytics import YOLO
 
-## Inference + per-class confidence
+model = YOLO("Weights/best.pt")
 
-```bash
-python scripts/predict.py \
-    --weights runs/exp2_proposed/weights/best.pt \
-    --source dataset/images/test
+# per-class Precision / Recall / mAP
+model.val()
+
+# parameters and GFLOPs
+model.info()
+
+# run inference on new images
+model.predict(source="path/to/images", conf=0.25, save=True)
 ```
 
 ---
@@ -89,21 +100,43 @@ python scripts/predict.py \
 
 The proposed hybrid keeps YOLOv8n's anchor-free detection head and PAN-FPN neck, and
 replaces the backbone with the full **YOLOv11n backbone built on C3k2 blocks**
-(a lighter, more efficient successor to YOLOv8's C2f block). See
-[`models/yolov8n-yolov11n-backbone.yaml`](models/yolov8n-yolov11n-backbone.yaml).
+(a lighter, more efficient successor to YOLOv8's C2f block).
 
 ```
 Input → [YOLOv11n C3k2 backbone] → [PAN-FPN neck] → [YOLOv8n head] → 3 severity classes
 ```
 
+Architecture definition: [`Proposed Model/yolov8n-yolov11n-backbone.yaml`](./Proposed%20Model/yolov8n-yolov11n-backbone.yaml)
+
+---
+
+## Results
+
+**Overall training results**
+
+![Results](./Visuals/results.png)
+
+**Precision–Recall & F1 curves**
+
+![PR curve](./Visuals/BoxPR_curve.png)
+![F1 curve](./Visuals/BoxF1_curve.png)
+
+**Confusion matrix (normalized)**
+
+![Confusion matrix](./Visuals/confusion_matrix_normalized.png)
+
+**mAP over training**
+
+![mAP@0.5](./Visuals/mAP50.png)
+![mAP@0.5:0.95](./Visuals/mAP50-95.png)
+
 ---
 
 ## Notes
 
-- The dataset is annotated with bounding boxes (CVAT) and validated by a dermatologist.
-- Augmentation: rotation and brightness adjustment.
 - Confidence scores reported per class are the mean of the model's per-detection
-  confidence (`box.conf`), which is distinct from precision/recall/mAP.
+  confidence (`box.conf`), which is distinct from precision, recall and mAP.
+- `best.pt` is the checkpoint with the best validation mAP.
 
 ## Citation
 
